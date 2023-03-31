@@ -16,21 +16,6 @@
 #define SECTOR_SIZE 512
 #define STR_BUFFER_SIZE 100
 
-/* ---------- Structures ---------- */
-
-typedef struct {
-    char    filename[8];
-    char    extension[3];
-    uint8_t     attr;
-    uint8_t     createTimeMicroSec;
-    uint16_t    createTime;
-    uint16_t    lastAccessDate;
-    uint16_t    lastModifiedTime;
-    uint16_t    lastModifiedDate;
-    uint16_t    cluster;
-    uint32_t    size
-}__attribute__ ((packed)) dirEntry_t;
-
 /* ---------- Helper functions ---------- */
 
 int getHex(int entry, char* fileptr){
