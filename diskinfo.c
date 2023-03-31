@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -14,6 +15,21 @@
 #define ENTRY_SIZE 32
 #define SECTOR_SIZE 512
 #define STR_BUFFER_SIZE 100
+
+/* ---------- Structures ---------- */
+
+typedef struct {
+    char    filename[8];
+    char    extension[3];
+    uint8_t     attr;
+    uint8_t     createTimeMicroSec;
+    uint16_t    createTime;
+    uint16_t    lastAccessDate;
+    uint16_t    lastModifiedTime;
+    uint16_t    lastModifiedDate;
+    uint16_t    cluster;
+    uint32_t    size
+}__attribute__ ((packed)) dirEntry_t;
 
 /* ---------- Helper functions ---------- */
 
@@ -80,24 +96,32 @@ int getFreeSize(int diskSize, char* fileptr){
     return (numFreeSectors*SECTOR_SIZE);
 }
 
-int getNumberOfFiles(char* p) {
-	p = &p[SECTOR_SIZE * 19];
+int getNumberOfFiles(char* fileptr, int physicalSector) {
+	char* dir = &fileptr[SECTOR_SIZE * physicalSector];
 	int count = 0;
 
-    int byte = 0;
-	while (p[byte] != 0x00) {
-		if (!(p[11] & 0x08) && !(p[11] & 0x10)) {
+	while(dir[0] != 0x00) {	
+        if((dir[11] & 0x10) && dir[0] != 0x2e){
+            int logicalCluster = dir[26] + (dir[27] << 8);
+            int inSub = getNumberOfFiles(fileptr, logicalCluster+31);
+            count += inSub;
+		}
+        else if (!(dir[11] & 0x08) && !(dir[11] & 0x10)) {
 			count++;
 		}
-        else if(p[11] & 0x10){
-			printf("Found a subdirectory\n");
-		}
-		p = &p[byte + 32];
+        dir+=32;
 	}
-
 	return count;
 }
 
+
+int getNumberOfCopies(char* fileptr){
+    return fileptr[16];
+}
+
+int getNumberOfSectorsPerFAT(char* fileptr){
+    return fileptr[22] + (fileptr[23] << 8);
+}
 
 
 /* ---------- Main function ---------- */
@@ -137,15 +161,18 @@ int main(int argc, char* argv[]){
     getLabel(label, fileptr);
     int diskSize = getDiskSize(fileptr);
     int freeSize = getFreeSize(diskSize, fileptr);
-    int numFiles = getNumberOfFiles(fileptr);
+    int numFiles = getNumberOfFiles(fileptr, 19);
+    int numCopies = getNumberOfCopies(fileptr);
+    int numSectorsPerFAT = getNumberOfSectorsPerFAT(fileptr);
 
     // print info
-    printf("OS Name: \t%s\n", OSName);
-    printf("Label: \t\t%s\n", label);
-    printf("Disk size: \t%d [bytes]\n", diskSize);
-    printf("Free size: \t%d [bytes]\n", freeSize);
-    printf("Num Files: \t%d \n", numFiles);
-
+    printf("OS Name: %s\n", OSName);
+    printf("Label: %s\n", label);
+    printf("Disk size: %d [bytes]\n", diskSize);
+    printf("Free disk size: %d [bytes]\n", freeSize);
+    printf("Number of Files: %d \n", numFiles);
+    printf("Number of FAT copies: %d\n", numCopies);
+    printf("Sectors per FAT: %d\n", numSectorsPerFAT);
 
     // clean
     munmap(fileptr, buffer.st_size);
