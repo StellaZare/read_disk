@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include "helper.h"
 
 /* ---------- Constants and global variables ---------- */
 
