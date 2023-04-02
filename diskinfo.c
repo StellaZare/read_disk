@@ -19,18 +19,6 @@
 
 /* ---------- Helper functions ---------- */
 
-int getHex(int entry, char* fileptr){
-    int b1 = fileptr[SECTOR_SIZE + (int)(3*entry /2)];
-    int b2 = fileptr[SECTOR_SIZE + (int)((3*entry /2) +1)];
-
-    if(entry%2 == 0){
-        return (b1 << 8) + (b2 & 0X0F);
-    }
-    else{
-        return ((b1 & 0xF0) >> 4) + (b2 << 4);
-    }
-}
-
 void getOSName(char output[STR_BUFFER_SIZE], char* fileptr){
     // file pointer starting byte 3 length 8
     int idx;
@@ -74,7 +62,7 @@ int getFreeSize(int diskSize, char* fileptr){
 
     // traverse FAT table given one entry per cluster
     for(int entry = 2; entry < numSectors; entry++){
-        int value = getHex(entry, fileptr);
+        int value = getFatEntry(entry, fileptr);
         if(value == 0x00){
             numFreeSectors++;
         }
@@ -142,7 +130,7 @@ int main(int argc, char* argv[]){
         close(file);
         return FAILED_EXIT;
     }
-    
+
     // retrieve info
     char OSName[STR_BUFFER_SIZE];
     getOSName(OSName, fileptr);

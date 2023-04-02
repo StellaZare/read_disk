@@ -14,6 +14,7 @@
 #define FALSE 0
 #define ENTRY_SIZE 32
 #define SECTOR_SIZE 512
+#define MAX_FAT_ENTRY 4093
 #define STR_BUFFER_SIZE 100
 
 /* ---------- Structures ---------- */
@@ -34,6 +35,24 @@ typedef struct {
 }__attribute__ ((packed)) dirEntry_t;
 
 /* ---------- Helper functions ---------- */
+
+int getFatEntry(int entry, char* fileptr){
+    int b1;
+    int b2;
+    int result;
+
+	if ((entry % 2) == 0) {
+		b1 = fileptr[SECTOR_SIZE + ((3*entry) / 2) + 1] & 0x0F;
+		b2 = fileptr[SECTOR_SIZE + ((3*entry) / 2)] & 0xFF;
+		result = (b1 << 8) + b2;
+	} else {
+		b1 = fileptr[SECTOR_SIZE + (int)((3*entry) / 2)] & 0xF0;
+		b2 = fileptr[SECTOR_SIZE + (int)((3*entry) / 2) + 1] & 0xFF;
+		result = (b1 >> 4) + (b2 << 4);
+	}
+
+    return result;
+}
 
 void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr){
     int b;
@@ -59,7 +78,7 @@ void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr){
 		entryPtr->creationDay = (dirPtr[16] & 0x1f);
 		entryPtr->creationHour = (dirPtr[15] & 0xf8) >> 3;
 		entryPtr->creationMin = ((dirPtr[14] & 0xe0) >> 5) + ((dirPtr[15] & 0x7) << 3);
-        
+        entryPtr->logicalSector = dirPtr[26] + (dirPtr[27] << 8);
         entryPtr->size = (dirPtr[28] & 0xFF) + ((dirPtr[29] & 0xFF) << 8) + ((dirPtr[30] & 0xFF) << 16) + ((dirPtr[31] & 0xFF) << 24);
     }
 

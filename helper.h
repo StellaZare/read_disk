@@ -26,4 +26,6 @@ typedef struct {
 
 /* ---------- Helper functions ---------- */
 
+int getFatEntry(int entry, char* fileptr);
+
 void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr);

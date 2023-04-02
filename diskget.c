@@ -20,6 +20,7 @@
 
 
 /* ---------- Helper functions ---------- */
+
 int getFileEntry(char* filename, char* fileptr, int physicalSector, dirEntry_t* fileEntry){
 	char* dir = &fileptr[SECTOR_SIZE * physicalSector];
     dirEntry_t currentDir;
@@ -44,6 +45,33 @@ int getFileEntry(char* filename, char* fileptr, int physicalSector, dirEntry_t* 
     // if file was not found in root directory 
     return FAILED_EXIT;
 }
+
+void copyFileEntry(char* fileptr, char* newFileptr, dirEntry_t* fileEntry){
+    int logicalSector = fileEntry->logicalSector;
+    int fileSize = fileEntry->size;
+    int bytesRemaining = fileSize;
+    int physicalSector = SECTOR_SIZE * (logicalSector + 31);
+    printf("logicalSector= %d    physicalSector=%d\n", logicalSector, physicalSector);
+
+    int byte;
+    for(byte = 0; byte < SECTOR_SIZE && bytesRemaining > 0; byte++){
+        newFileptr[fileSize-bytesRemaining] = fileptr[physicalSector+byte];
+        //printf("%d: %c %d\n", byte, (char)fileptr[physicalSector+byte], bytesRemaining);
+        bytesRemaining--;
+    }
+    printf("Here\n");
+    logicalSector = getFatEntry(logicalSector, fileptr);
+    while(logicalSector != 0xFFF){
+        physicalSector = SECTOR_SIZE * (logicalSector + 31);
+        for(byte = 0; byte < SECTOR_SIZE && bytesRemaining > 0; byte++){
+            newFileptr[fileSize-bytesRemaining] = fileptr[physicalSector+byte];
+            bytesRemaining--;
+        }
+        logicalSector = getFatEntry(logicalSector, fileptr);
+    }
+}
+
+
 /* ---------- Main function ---------- */
 
 int main(int argc, char* argv[]){
@@ -88,7 +116,6 @@ int main(int argc, char* argv[]){
     // struct to hold file entry details
     dirEntry_t fileEntry;
     int result = getFileEntry(filename,fileptr, 19, &fileEntry);
-
     if(result == FAILED_EXIT){
         printf("Error: file \"%s\" not found in root directory\n", filename);
         munmap(fileptr, buffer.st_size);
@@ -96,10 +123,46 @@ int main(int argc, char* argv[]){
         return FAILED_EXIT;
     }
 
-    
+    //open a new file
+    int newFile = open(filename, O_RDWR | O_CREAT, 0666);
+    if (newFile < 0){
+        printf("Error: could not open new file\n");
+        close(file);
+        munmap(fileptr, buffer.st_size);
+        return FAILED_EXIT;
+    }
 
+    // set the size of the new file
+    if (ftruncate(newFile, fileEntry.size) < 0) {
+        printf("Error: ftruncate() call failed\n");
+        close(file);
+        munmap(fileptr, buffer.st_size);
+        return FAILED_EXIT;
+    }
 
+    // check write access
+    result = write(newFile, "", 1);
+    if (result != 1) {
+        close(file);
+        close(newFile);
+        munmap(fileptr, buffer.st_size);
+        printf("Error: unable to write to new file\n");
+        return FAILED_EXIT;
+    }
 
+    // load new memory into buffer
+    char* newFileptr = mmap(NULL, fileEntry.size, PROT_READ|PROT_WRITE, MAP_SHARED, newFile, 0);
+    if(newFileptr == MAP_FAILED){
+        printf("Error: mmap() call failed\n");
+        close(file);
+        return FAILED_EXIT;
+    }
+
+    // copy file contents
+    copyFileEntry(fileptr, newFileptr, &fileEntry);
+
+    munmap(newFileptr, fileEntry.size);
+    close(newFile);
 
     // clean
     munmap(fileptr, buffer.st_size);
