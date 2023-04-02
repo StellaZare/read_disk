@@ -37,14 +37,17 @@ typedef struct {
 
 void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr){
     int b;
-    for(b = 0; b < 8 && dirPtr[b] != 0x00; b++){
+    for(b = 0; b < 8 && dirPtr[b] != 0x20; b++){
+        //printf("%c ", dirPtr[b]);
         entryPtr->filename[b] = (char)dirPtr[b];
     }
     entryPtr->filename[b] = '\0';
+    
     for(b = 0; b < 3; b++){
         entryPtr->extension[b] = (char)dirPtr[8+b];
     }
     entryPtr->extension[b] = '\0';
+
     if (dirPtr[11] == 0x10){
         entryPtr->attr = 'D';
         entryPtr->logicalSector = dirPtr[26] + (dirPtr[27] << 8);

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <fcntl.h>
+#include <string.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -19,7 +20,30 @@
 
 
 /* ---------- Helper functions ---------- */
+int getFileEntry(char* filename, char* fileptr, int physicalSector, dirEntry_t* fileEntry){
+	char* dir = &fileptr[SECTOR_SIZE * physicalSector];
+    dirEntry_t currentDir;
 
+	while(dir[0] != 0x00) {	
+        if (!(dir[11] & 0x08) && dir[0] != 0x2e) {
+			extractDirectoryEntry(&currentDir, dir);
+            char buffer[STR_BUFFER_SIZE];
+            memset(buffer, 0, STR_BUFFER_SIZE);
+            strcat(buffer, currentDir.filename);
+            strcat(buffer, ".");
+            strcat(buffer, currentDir.extension);
+            strcat(buffer, "\0");
+            if(strcmp(buffer, filename)==0){
+                *fileEntry = currentDir;
+                return 1;
+            }
+            memset(buffer, 0, STR_BUFFER_SIZE);
+		}
+        dir+=32;
+	}
+    // if file was not found in root directory 
+    return FAILED_EXIT;
+}
 /* ---------- Main function ---------- */
 
 int main(int argc, char* argv[]){
@@ -32,15 +56,16 @@ int main(int argc, char* argv[]){
     
     // open file
     int file = open(argv[1], O_RDONLY);
-    if(file == -1){
+    if(file == FAILED_EXIT){
         printf("Error: unable to open disk image\n");
         return FAILED_EXIT;
     }
 
     // create buffer and get size
     struct stat buffer;
-    if(fstat(file, &buffer) == -1){
+    if(fstat(file, &buffer) == FAILED_EXIT){
         printf("Error: fstat() call failed\n");
+        close(file);
         return FAILED_EXIT;
     }
 
@@ -48,10 +73,33 @@ int main(int argc, char* argv[]){
     char* fileptr = mmap(NULL, buffer.st_size, PROT_READ, MAP_SHARED, file, 0);
     if(fileptr == MAP_FAILED){
         printf("Error: mmap() call failed\n");
+        close(file);
         return FAILED_EXIT;
     }
 
-   
+    // extract input filename
+    char filename[STR_BUFFER_SIZE];
+    int i;
+    for(i = 0; argv[2][i] != '\0'; i++){
+        filename[i] = toupper(argv[2][i]);
+    }
+    filename[i] = '\0';
+
+    // struct to hold file entry details
+    dirEntry_t fileEntry;
+    int result = getFileEntry(filename,fileptr, 19, &fileEntry);
+
+    if(result == FAILED_EXIT){
+        printf("Error: file \"%s\" not found in root directory\n", filename);
+        munmap(fileptr, buffer.st_size);
+        close(file);
+        return FAILED_EXIT;
+    }
+
+    
+
+
+
 
     // clean
     munmap(fileptr, buffer.st_size);

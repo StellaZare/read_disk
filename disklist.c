@@ -27,7 +27,7 @@ void printDirectoryContents(char* parentName, dirEntry_t* entryPtr, int count){
             printf("\tD            %s\n", entryPtr[i].filename);
         }
         else{
-            printf("\tF %10d %s.%s\t%02d-%02d-%02d %02d:%02d\n", 
+            printf("\tF %10d %10.10s.%s\t%02d-%02d-%02d %02d:%02d\n", 
                 entryPtr[i].size, entryPtr[i].filename, entryPtr[i].extension, 
                 entryPtr[i].creationDay, entryPtr[i].creationMonth, entryPtr[i].creationYear,
                 entryPtr[i].creationHour, entryPtr[i].creationMin ); 
