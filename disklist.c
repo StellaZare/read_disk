@@ -27,6 +27,7 @@ typedef struct {
     int     creationDay;
     int     creationMonth;
     int     creationYear;
+    int     logicalSector;
     uint32_t    size;
     
     
@@ -46,6 +47,7 @@ void extractEntry(dirEntry_t* entryPtr, char* dirPtr){
     entryPtr->extension[b] = '\0';
     if (dirPtr[11] == 0x10){
         entryPtr->attr = 'D';
+        entryPtr->logicalSector = dirPtr[26] + (dirPtr[27] << 8);
     }else{
         entryPtr->attr = 'F';
 
@@ -86,13 +88,16 @@ void traverseDirectory(char* parentName, char* fileptr, int physicalSector) {
 			extractEntry(&dirContents[count], dir);
             count++;
 		}
-        if((dir[11] & 0x10) && dir[0] != 0x2e){
-            int logicalCluster = dir[26] + (dir[27] << 8);
-            traverseDirectory(dirContents[count-1].filename, fileptr, logicalCluster+31);   
-		} 
         dir+=32;
 	}
+
     printDirectoryContents(parentName, dirContents, count);
+
+    for(int i = 0; i < count; i++) {
+        if(dirContents[i].attr == 'D'){
+            traverseDirectory(dirContents[i].filename, fileptr, dirContents[i].logicalSector+31);
+        }
+    }
 }
 
 /* ---------- Main function ---------- */
