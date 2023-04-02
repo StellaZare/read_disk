@@ -113,7 +113,7 @@ int getNumberOfSectorsPerFAT(char* fileptr){
 /* ---------- Main function ---------- */
 
 int main(int argc, char* argv[]){
-    // check input
+        // check input
     if(argc < 2){
         printf("Error: please include a disk image\n");
         return FAILED_EXIT;
@@ -123,6 +123,7 @@ int main(int argc, char* argv[]){
     int file = open(argv[1], O_RDONLY);
     if(file == -1){
         printf("Error: unable to open disk image\n");
+        close(file);
         return FAILED_EXIT;
     }
 
@@ -130,6 +131,7 @@ int main(int argc, char* argv[]){
     struct stat buffer;
     if(fstat(file, &buffer) == -1){
         printf("Error: fstat() call failed\n");
+        close(file);
         return FAILED_EXIT;
     }
 
@@ -137,9 +139,10 @@ int main(int argc, char* argv[]){
     char* fileptr = mmap(NULL, buffer.st_size, PROT_READ, MAP_SHARED, file, 0);
     if(fileptr == MAP_FAILED){
         printf("Error: mmap() call failed\n");
+        close(file);
         return FAILED_EXIT;
     }
-
+    
     // retrieve info
     char OSName[STR_BUFFER_SIZE];
     getOSName(OSName, fileptr);
