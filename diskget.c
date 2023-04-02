@@ -160,10 +160,10 @@ int main(int argc, char* argv[]){
     // copy file contents
     copyFileEntry(fileptr, newFileptr, &fileEntry);
 
-    munmap(newFileptr, fileEntry.size);
-    close(newFile);
 
     // clean
+    munmap(newFileptr, fileEntry.size);
+    close(newFile);
     munmap(fileptr, buffer.st_size);
     close(file);
  
