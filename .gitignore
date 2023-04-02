@@ -1,6 +1,12 @@
+# My files
+*.PDF
+*.TXT
+diskget
+diskinfo
+disklist
+
 # Prerequisites
 *.d
-practice.c
 
 # Object files
 *.o
