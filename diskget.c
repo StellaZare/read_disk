@@ -114,7 +114,7 @@ int main(int argc, char* argv[]){
 
     // struct to hold file entry details
     dirEntry_t fileEntry;
-    int result = getFileEntry(filename,fileptr, 19, &fileEntry);
+    int result = getFileEntry(filename, fileptr, 19, &fileEntry);
     if(result == FAILED_EXIT){
         printf("Error: file \"%s\" not found in root directory\n", filename);
         munmap(fileptr, buffer.st_size);
