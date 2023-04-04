@@ -119,3 +119,15 @@ The function copies over the first 512 bytes of the file using the first logical
 
 not yet complete
 
+# Useful commands
+```
+xxd -g <num> -s <num> -l <num> <disk image>
+```
+# Useful info
+| Name     | Sector  | 1st Byte |
+|----------|---------|----------|
+| boot     | 0       | 0        |
+| FAT1     | 1       | 512      |
+| FAT1     | 10      | 5,120    |
+| root     | 19      | 9,728    |
+| data     | 33      | 16,896   |

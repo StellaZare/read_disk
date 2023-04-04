@@ -20,6 +20,11 @@
 
 
 /* ---------- Helper functions ---------- */
+
+/*
+    used to determine if a file with the same name alreasy exists in the
+    root directory
+*/
 int rootContainsFile(char* diskptr, char* filename, int physicalSector){
     char* dir = &diskptr[SECTOR_SIZE * physicalSector];
     dirEntry_t currentDir;
@@ -91,8 +96,8 @@ int main(int argc, char* argv[]){
         filename[i] = toupper(inputFileName[i]);
     }
     filename[i] = '\0';
-
-    int inputFile = open(filename, O_RDONLY);
+    
+    int inputFile = open(inputFileName, O_RDONLY);
     if(inputFile == FAILED_EXIT){
         printf("Error: input file not found\n");
         munmap(diskptr, buffer.st_size);
@@ -138,6 +143,7 @@ int main(int argc, char* argv[]){
             close(file);
             return FAILED_EXIT;
         }
+        printf("\tAdding file to root directory\n");
         addFileToRootDir(inputFileName, inputFileptr, inputFileSize, diskptr);
     }
 
