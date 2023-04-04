@@ -5,6 +5,7 @@ compile:
 	gcc -Wall helper.c diskinfo.c -o diskinfo
 	gcc -Wall helper.c disklist.c -o disklist
 	gcc -Wall helper.c diskget.c -o diskget
+	gcc -Wall helper.c diskput.c -o diskput
 
 .phony clean:
 clean:
