@@ -9,7 +9,7 @@ compile:
 
 .phony clean:
 clean:
-	rm diskinfo disklist diskget
+	rm diskinfo disklist diskget diskput
 
 .PHONY: run1
 run1:
