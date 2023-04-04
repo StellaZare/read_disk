@@ -70,17 +70,19 @@ int main(int argc, char* argv[]){
         return FAILED_EXIT;
     }
 
-    char* intputFileptr = mmap(NULL, inputFileBuffer.st_size, PROT_READ, MAP_SHARED, file, 0);
+    int inputFileSize = inputFileBuffer.st_size;
+    char* intputFileptr = mmap(NULL, inputFileSize, PROT_READ, MAP_SHARED, file, 0);
     if(intputFileptr == MAP_FAILED){
         printf("Error: mmap() call failed\n");
         close(file);
         return FAILED_EXIT;
     }
 
-
+    int diskSize = getDiskSize(fileptr);
+    int freeSize = getFreeSize(diskSize, fileptr);
 
     // clean
-    munmap(intputFileptr, inputFileBuffer.st_size);
+    munmap(intputFileptr, inputFileSize);
     close(inputFile);
     munmap(fileptr, buffer.st_size);
     close(file);

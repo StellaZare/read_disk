@@ -36,6 +36,11 @@ typedef struct {
 
 /* ---------- Helper functions ---------- */
 
+int getDiskSize(char* fileptr){
+    int numSectors = fileptr[19] + (fileptr[20] << 8);
+    return (numSectors*SECTOR_SIZE);
+}
+
 int getFatEntry(int entry, char* fileptr){
     int b1;
     int b2;
@@ -82,4 +87,18 @@ void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr){
         entryPtr->size = (dirPtr[28] & 0xFF) + ((dirPtr[29] & 0xFF) << 8) + ((dirPtr[30] & 0xFF) << 16) + ((dirPtr[31] & 0xFF) << 24);
     }
 
+}
+
+int getFreeSize(int diskSize, char* fileptr){
+    int numFreeSectors = 0;
+    int numSectors = fileptr[19] + (fileptr[20] << 8);
+
+    // traverse FAT table given one entry per cluster
+    for(int entry = 2; entry < numSectors; entry++){
+        int value = getFatEntry(entry, fileptr);
+        if(value == 0x00){
+            numFreeSectors++;
+        }
+    }
+    return (numFreeSectors*SECTOR_SIZE);
 }

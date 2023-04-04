@@ -51,25 +51,6 @@ void getLabel(char output[STR_BUFFER_SIZE], char* fileptr){
     output[idx] = '\0';
 }
 
-int getDiskSize(char* fileptr){
-    int numSectors = fileptr[19] + (fileptr[20] << 8);
-    return (numSectors*SECTOR_SIZE);
-}
-
-int getFreeSize(int diskSize, char* fileptr){
-    int numFreeSectors = 0;
-    int numSectors = fileptr[19] + (fileptr[20] << 8);
-
-    // traverse FAT table given one entry per cluster
-    for(int entry = 2; entry < numSectors; entry++){
-        int value = getFatEntry(entry, fileptr);
-        if(value == 0x00){
-            numFreeSectors++;
-        }
-    }
-    return (numFreeSectors*SECTOR_SIZE);
-}
-
 int getNumberOfFiles(char* fileptr, int physicalSector) {
 	char* dir = &fileptr[SECTOR_SIZE * physicalSector];
 	int count = 0;
