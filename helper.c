@@ -36,23 +36,23 @@ typedef struct {
 
 /* ---------- Helper functions ---------- */
 
-int getDiskSize(char* fileptr){
-    int numSectors = fileptr[19] + (fileptr[20] << 8);
+int getDiskSize(char* diskptr){
+    int numSectors = diskptr[19] + (diskptr[20] << 8);
     return (numSectors*SECTOR_SIZE);
 }
 
-int getFatEntry(int entry, char* fileptr){
+int getFatEntry(int entry, char* diskptr){
     int b1;
     int b2;
     int result;
 
 	if ((entry % 2) == 0) {
-		b1 = fileptr[SECTOR_SIZE + ((3*entry) / 2) + 1] & 0x0F;
-		b2 = fileptr[SECTOR_SIZE + ((3*entry) / 2)] & 0xFF;
+		b1 = diskptr[SECTOR_SIZE + ((3*entry) / 2) + 1] & 0x0F;
+		b2 = diskptr[SECTOR_SIZE + ((3*entry) / 2)] & 0xFF;
 		result = (b1 << 8) + b2;
 	} else {
-		b1 = fileptr[SECTOR_SIZE + (int)((3*entry) / 2)] & 0xF0;
-		b2 = fileptr[SECTOR_SIZE + (int)((3*entry) / 2) + 1] & 0xFF;
+		b1 = diskptr[SECTOR_SIZE + (int)((3*entry) / 2)] & 0xF0;
+		b2 = diskptr[SECTOR_SIZE + (int)((3*entry) / 2) + 1] & 0xFF;
 		result = (b1 >> 4) + (b2 << 4);
 	}
 
@@ -89,13 +89,13 @@ void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr){
 
 }
 
-int getFreeSize(int diskSize, char* fileptr){
+int getFreeSize(int diskSize, char* diskptr){
     int numFreeSectors = 0;
-    int numSectors = fileptr[19] + (fileptr[20] << 8);
+    int numSectors = diskptr[19] + (diskptr[20] << 8);
 
     // traverse FAT table given one entry per cluster
     for(int entry = 2; entry < numSectors; entry++){
-        int value = getFatEntry(entry, fileptr);
+        int value = getFatEntry(entry, diskptr);
         if(value == 0x00){
             numFreeSectors++;
         }

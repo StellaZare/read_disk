@@ -35,8 +35,8 @@ void printDirectoryContents(char* parentName, dirEntry_t* entryPtr, int count){
     }
 }
 
-void traverseDirectory(char* parentName, char* fileptr, int physicalSector) {
-	char* dir = &fileptr[SECTOR_SIZE * physicalSector];
+void traverseDirectory(char* parentName, char* diskptr, int physicalSector) {
+	char* dir = &diskptr[SECTOR_SIZE * physicalSector];
 	int count = 0;
     dirEntry_t dirContents[16];
 
@@ -52,7 +52,7 @@ void traverseDirectory(char* parentName, char* fileptr, int physicalSector) {
 
     for(int i = 0; i < count; i++) {
         if(dirContents[i].attr == 'D'){
-            traverseDirectory(dirContents[i].filename, fileptr, dirContents[i].logicalSector+31);
+            traverseDirectory(dirContents[i].filename, diskptr, dirContents[i].logicalSector+31);
         }
     }
 }
@@ -83,8 +83,8 @@ int main(int argc, char* argv[]){
     }
 
     // load disk image into buffer
-    char* fileptr = mmap(NULL, buffer.st_size, PROT_READ, MAP_SHARED, file, 0);
-    if(fileptr == MAP_FAILED){
+    char* diskptr = mmap(NULL, buffer.st_size, PROT_READ, MAP_SHARED, file, 0);
+    if(diskptr == MAP_FAILED){
         printf("Error: mmap() call failed\n");
         close(file);
         return FAILED_EXIT;
@@ -92,10 +92,10 @@ int main(int argc, char* argv[]){
 
     // work with the disk
     char* rootDir = "Root Directory";
-    traverseDirectory(rootDir, fileptr, 19);
+    traverseDirectory(rootDir, diskptr, 19);
 
     // clean
-    munmap(fileptr, buffer.st_size);
+    munmap(diskptr, buffer.st_size);
     close(file);
  
     return 0;

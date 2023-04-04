@@ -26,10 +26,10 @@ typedef struct {
 
 /* ---------- Helper functions ---------- */
 
-int getFreeSize(int diskSize, char* fileptr);
+int getDiskSize(char* diskptr);
 
-int getDiskSize(char* fileptr);
-
-int getFatEntry(int entry, char* fileptr);
+int getFatEntry(int entry, char* diskptr);
 
 void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr);
+
+int getFreeSize(int diskSize, char* diskptr);

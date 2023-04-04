@@ -19,46 +19,46 @@
 
 /* ---------- Helper functions ---------- */
 
-void getOSName(char output[STR_BUFFER_SIZE], char* fileptr){
+void getOSName(char output[STR_BUFFER_SIZE], char* diskptr){
     // file pointer starting byte 3 length 8
     int idx;
     for(idx = 0; idx < 8; idx++){
-        output[idx] = fileptr[idx+3];
+        output[idx] = diskptr[idx+3];
     }
     output[idx] = '\0';
 }
 
-void getLabel(char output[STR_BUFFER_SIZE], char* fileptr){
+void getLabel(char output[STR_BUFFER_SIZE], char* diskptr){
     int idx;
     // if label in boot sector: start byte 43 length 11 bytes
     for(idx = 0; idx < 11; idx++){
-        output[idx] = fileptr[idx+43];
+        output[idx] = diskptr[idx+43];
     }
 
     // if label in root directory: traverse root directory 
     if(output[0] == ' '){
-        fileptr = &fileptr[SECTOR_SIZE*19];
-        while(fileptr[0] != 0x00){
-            if(fileptr[11] == 0x08){
+        diskptr = &diskptr[SECTOR_SIZE*19];
+        while(diskptr[0] != 0x00){
+            if(diskptr[11] == 0x08){
                 for(idx = 0; idx < 11; idx++){
-                    output[idx] = fileptr[idx];
+                    output[idx] = diskptr[idx];
                 }   
             }
             // incerement to the next sector
-            fileptr = &fileptr[32];
+            diskptr = &diskptr[32];
         }
     }
     output[idx] = '\0';
 }
 
-int getNumberOfFiles(char* fileptr, int physicalSector) {
-	char* dir = &fileptr[SECTOR_SIZE * physicalSector];
+int getNumberOfFiles(char* diskptr, int physicalSector) {
+	char* dir = &diskptr[SECTOR_SIZE * physicalSector];
 	int count = 0;
 
 	while(dir[0] != 0x00) {	
         if((dir[11] & 0x10) && dir[0] != 0x2e){
             int logicalCluster = dir[26] + (dir[27] << 8);
-            int inSub = getNumberOfFiles(fileptr, logicalCluster+31);
+            int inSub = getNumberOfFiles(diskptr, logicalCluster+31);
             count += inSub;
 		}
         else if (!(dir[11] & 0x08) && !(dir[11] & 0x10)) {
@@ -70,12 +70,12 @@ int getNumberOfFiles(char* fileptr, int physicalSector) {
 }
 
 
-int getNumberOfCopies(char* fileptr){
-    return fileptr[16];
+int getNumberOfCopies(char* diskptr){
+    return diskptr[16];
 }
 
-int getNumberOfSectorsPerFAT(char* fileptr){
-    return fileptr[22] + (fileptr[23] << 8);
+int getNumberOfSectorsPerFAT(char* diskptr){
+    return diskptr[22] + (diskptr[23] << 8);
 }
 
 
@@ -105,8 +105,8 @@ int main(int argc, char* argv[]){
     }
 
     // load disk image into buffer
-    char* fileptr = mmap(NULL, buffer.st_size, PROT_READ, MAP_SHARED, file, 0);
-    if(fileptr == MAP_FAILED){
+    char* diskptr = mmap(NULL, buffer.st_size, PROT_READ, MAP_SHARED, file, 0);
+    if(diskptr == MAP_FAILED){
         printf("Error: mmap() call failed\n");
         close(file);
         return FAILED_EXIT;
@@ -114,14 +114,14 @@ int main(int argc, char* argv[]){
 
     // retrieve info
     char OSName[STR_BUFFER_SIZE];
-    getOSName(OSName, fileptr);
+    getOSName(OSName, diskptr);
     char label[STR_BUFFER_SIZE];
-    getLabel(label, fileptr);
-    int diskSize = getDiskSize(fileptr);
-    int freeSize = getFreeSize(diskSize, fileptr);
-    int numFiles = getNumberOfFiles(fileptr, 19);
-    int numCopies = getNumberOfCopies(fileptr);
-    int numSectorsPerFAT = getNumberOfSectorsPerFAT(fileptr);
+    getLabel(label, diskptr);
+    int diskSize = getDiskSize(diskptr);
+    int freeSize = getFreeSize(diskSize, diskptr);
+    int numFiles = getNumberOfFiles(diskptr, 19);
+    int numCopies = getNumberOfCopies(diskptr);
+    int numSectorsPerFAT = getNumberOfSectorsPerFAT(diskptr);
 
     // print info
     printf("OS Name: %s\n", OSName);
@@ -133,7 +133,7 @@ int main(int argc, char* argv[]){
     printf("Sectors per FAT: %d\n", numSectorsPerFAT);
 
     // clean
-    munmap(fileptr, buffer.st_size);
+    munmap(diskptr, buffer.st_size);
     close(file);
  
     return 0;

@@ -21,8 +21,8 @@
 
 /* ---------- Helper functions ---------- */
 
-int getFileEntry(char* filename, char* fileptr, int physicalSector, dirEntry_t* fileEntry){
-	char* dir = &fileptr[SECTOR_SIZE * physicalSector];
+int getFileEntry(char* filename, char* diskptr, int physicalSector, dirEntry_t* fileEntry){
+	char* dir = &diskptr[SECTOR_SIZE * physicalSector];
     dirEntry_t currentDir;
 
 	while(dir[0] != 0x00) {	
@@ -46,7 +46,7 @@ int getFileEntry(char* filename, char* fileptr, int physicalSector, dirEntry_t* 
     return FAILED_EXIT;
 }
 
-void copyFileEntry(char* fileptr, char* newFileptr, dirEntry_t* fileEntry){
+void copyFileEntry(char* diskptr, char* newFileptr, dirEntry_t* fileEntry){
     int logicalSector = fileEntry->logicalSector;
     int fileSize = fileEntry->size;
     int bytesRemaining = fileSize;
@@ -54,18 +54,18 @@ void copyFileEntry(char* fileptr, char* newFileptr, dirEntry_t* fileEntry){
 
     int byte;
     for(byte = 0; byte < SECTOR_SIZE && bytesRemaining > 0; byte++){
-        newFileptr[fileSize-bytesRemaining] = fileptr[physicalSector+byte];
-        //printf("%d: %c %d\n", byte, (char)fileptr[physicalSector+byte], bytesRemaining);
+        newFileptr[fileSize-bytesRemaining] = diskptr[physicalSector+byte];
+        //printf("%d: %c %d\n", byte, (char)diskptr[physicalSector+byte], bytesRemaining);
         bytesRemaining--;
     }
-    logicalSector = getFatEntry(logicalSector, fileptr);
+    logicalSector = getFatEntry(logicalSector, diskptr);
     while(logicalSector != 0xFFF){
         physicalSector = SECTOR_SIZE * (logicalSector + 31);
         for(byte = 0; byte < SECTOR_SIZE && bytesRemaining > 0; byte++){
-            newFileptr[fileSize-bytesRemaining] = fileptr[physicalSector+byte];
+            newFileptr[fileSize-bytesRemaining] = diskptr[physicalSector+byte];
             bytesRemaining--;
         }
-        logicalSector = getFatEntry(logicalSector, fileptr);
+        logicalSector = getFatEntry(logicalSector, diskptr);
     }
     printf("\tDone copying file!\n");
 }
@@ -97,8 +97,8 @@ int main(int argc, char* argv[]){
     }
 
     // load disk image into buffer
-    char* fileptr = mmap(NULL, buffer.st_size, PROT_READ, MAP_SHARED, file, 0);
-    if(fileptr == MAP_FAILED){
+    char* diskptr = mmap(NULL, buffer.st_size, PROT_READ, MAP_SHARED, file, 0);
+    if(diskptr == MAP_FAILED){
         printf("Error: mmap() call failed\n");
         close(file);
         return FAILED_EXIT;
@@ -114,10 +114,10 @@ int main(int argc, char* argv[]){
 
     // struct to hold file entry details
     dirEntry_t fileEntry;
-    int result = getFileEntry(filename, fileptr, 19, &fileEntry);
+    int result = getFileEntry(filename, diskptr, 19, &fileEntry);
     if(result == FAILED_EXIT){
         printf("Error: file \"%s\" not found in root directory\n", filename);
-        munmap(fileptr, buffer.st_size);
+        munmap(diskptr, buffer.st_size);
         close(file);
         return FAILED_EXIT;
     }
@@ -127,7 +127,7 @@ int main(int argc, char* argv[]){
     if (newFile < 0){
         printf("Error: could not open new file\n");
         close(file);
-        munmap(fileptr, buffer.st_size);
+        munmap(diskptr, buffer.st_size);
         return FAILED_EXIT;
     }
 
@@ -135,7 +135,7 @@ int main(int argc, char* argv[]){
     if (ftruncate(newFile, fileEntry.size) < 0) {
         printf("Error: ftruncate() call failed\n");
         close(file);
-        munmap(fileptr, buffer.st_size);
+        munmap(diskptr, buffer.st_size);
         return FAILED_EXIT;
     }
 
@@ -144,7 +144,7 @@ int main(int argc, char* argv[]){
     if (result != 1) {
         close(file);
         close(newFile);
-        munmap(fileptr, buffer.st_size);
+        munmap(diskptr, buffer.st_size);
         printf("Error: unable to write to new file\n");
         return FAILED_EXIT;
     }
@@ -158,13 +158,13 @@ int main(int argc, char* argv[]){
     }
 
     // copy file contents
-    copyFileEntry(fileptr, newFileptr, &fileEntry);
+    copyFileEntry(diskptr, newFileptr, &fileEntry);
 
 
     // clean
     munmap(newFileptr, fileEntry.size);
     close(newFile);
-    munmap(fileptr, buffer.st_size);
+    munmap(diskptr, buffer.st_size);
     close(file);
  
     return 0;
