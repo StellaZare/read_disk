@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 
 int main(){
-    int fls = 0xF38F;
+    uint16_t fls = 0xF38F;
     int b26 = 0;
     int b27 = 0;
 

@@ -70,11 +70,13 @@ void setFatEntry(int value, int entry, char* diskptr){
 		Fat1[((3*entry) / 2)] = value & 0xFF;
         Fat2[((3*entry) / 2) + 1] = ((value >> 8) & 0x0F) + (Fat1[((3*entry) / 2) + 1] & 0xF0);
 		Fat2[((3*entry) / 2)] = value & 0xFF;
+        printf("entry: %d b1: %x b2: %x\n", entry, Fat1[((3*entry) / 2)], Fat1[((3*entry) / 2) + 1]);
 	} else {
 		Fat1[(int)((3*entry) / 2)] = ((value << 4) & 0xF0) + (Fat1[(int)((3*entry) / 2)] & 0x0F);
 		Fat1[(int)((3*entry) / 2) + 1] = (value >> 4) & 0xFF;
         Fat2[(int)((3*entry) / 2)] = ((value << 4) & 0xF0) + (Fat1[(int)((3*entry) / 2)] & 0x0F);
 		Fat2[(int)((3*entry) / 2) + 1] = (value >> 4) & 0xFF;
+        printf("entry: %d b1: %x b2: %x\n", entry, Fat1[(int)((3*entry) / 2)], Fat1[(int)((3*entry) / 2) + 1]);
 	}  
 }
 
