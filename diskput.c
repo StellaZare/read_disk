@@ -61,7 +61,7 @@ int getNextFATEntry(char* diskptr){
     return FAILED_EXIT;
 }
 
-void addRootEntry(char* name, int fileSize, int firstLogicalSector, char* diskptr){
+void addRootEntry(char* name, int fileSize, uint32_t firstLogicalSector, char* diskptr){
     char* dir = diskptr + (SECTOR_SIZE * 19);
     while(dir[0] != 0x00){
         dir += 32;
@@ -85,11 +85,11 @@ void addRootEntry(char* name, int fileSize, int firstLogicalSector, char* diskpt
 
     dir[11] = 0;
 
-    printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
-    dir[26] = (firstLogicalSector);
-    printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
-	dir[27] = (firstLogicalSector - dir[26]) >> 8;
-    printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
+    //printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
+    dir[26] = (uint32_t)(firstLogicalSector & 0x000000FF);
+    //printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
+	dir[27] = (firstLogicalSector & 0x0000FF00) >> 8;
+    //printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
 
     dir[28] = (fileSize & 0x000000FF);
 	dir[29] = (fileSize & 0x0000FF00) >> 8;
@@ -97,15 +97,31 @@ void addRootEntry(char* name, int fileSize, int firstLogicalSector, char* diskpt
 	dir[31] = (fileSize & 0xFF000000) >> 24;
 }
 
-int copyFileToRootDir(char* inputFileName, char* inputFileptr, int inputFileSize, char* diskptr){
+void copyFileToRootDir(char* inputFileName, char* inputFileptr, int inputFileSize, char* diskptr){
     int bytesRemaining = inputFileSize;
     int currFatEntry = getNextFATEntry(diskptr);
-    printf("currentFAT: %d\n", currFatEntry);
 
     addRootEntry(inputFileName, inputFileSize, currFatEntry, diskptr);
+    
+    while(bytesRemaining > 0){
+        printf("currentFATEntry: %d\n", currFatEntry);
+        int physicalSector = SECTOR_SIZE * (currFatEntry + 31);
 
-
-    return 0;
+        int byte;
+        for(byte = 0; byte < SECTOR_SIZE; byte++){
+            if(bytesRemaining == 0){
+                setFatEntry(0xFFF, currFatEntry, diskptr);
+                return;
+            }
+            diskptr[physicalSector + byte] = inputFileptr[inputFileSize - bytesRemaining];
+            bytesRemaining--;
+        }
+        setFatEntry(0XFFF, currFatEntry, diskptr);
+        int nextFatEntry = getNextFATEntry(diskptr);
+        setFatEntry(nextFatEntry, currFatEntry, diskptr);
+        currFatEntry = nextFatEntry;
+    }
+    
 }
 
 /* ---------- Main function ---------- */
