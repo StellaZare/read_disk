@@ -30,6 +30,8 @@ int getDiskSize(char* diskptr);
 
 int getFatEntry(int entry, char* diskptr);
 
+void setFatEntry(int value, int entry, char* diskptr);
+
 void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr);
 
 int getFreeSize(int diskSize, char* diskptr);

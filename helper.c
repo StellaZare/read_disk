@@ -59,6 +59,27 @@ int getFatEntry(int entry, char* diskptr){
     return result;
 }
 
+void setFatEntry(int value, int entry, char* diskptr){
+    char* Fat1 = diskptr + SECTOR_SIZE ;
+    char* Fat2 = diskptr + (SECTOR_SIZE * 10);
+
+    printf("setting entry bytes: %d %d \n", ((3*entry) / 2) + 1, (3*entry) / 2);
+
+    if ((entry % 2) == 0) {
+		Fat1[((3*entry) / 2) + 1] = ((value >> 8) & 0x0F) + (Fat1[((3*entry) / 2) + 1] & 0xF0);
+		Fat1[((3*entry) / 2)] = value & 0xFF;
+        Fat2[((3*entry) / 2) + 1] = ((value >> 8) & 0x0F) + (Fat1[((3*entry) / 2) + 1] & 0xF0);
+		Fat2[((3*entry) / 2)] = value & 0xFF;
+        printf("new values: %d, %d\n", Fat1[SECTOR_SIZE + ((3*entry) / 2) + 1], Fat1[SECTOR_SIZE + ((3*entry) / 2)]);
+	} else {
+		Fat1[(int)((3*entry) / 2)] = ((value << 4) & 0xF0) + (Fat1[(int)((3*entry) / 2)] & 0x0F);
+		Fat1[(int)((3*entry) / 2) + 1] = (value >> 4) & 0xFF;
+        Fat2[(int)((3*entry) / 2)] = ((value << 4) & 0xF0) + (Fat1[(int)((3*entry) / 2)] & 0x0F);
+		Fat2[(int)((3*entry) / 2) + 1] = (value >> 4) & 0xFF;
+        printf("new values: %d, %d\n", Fat1[SECTOR_SIZE + (int)((3*entry) / 2)], Fat1[SECTOR_SIZE + (int)((3*entry) / 2) + 1]);
+	}  
+}
+
 void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr){
     int b;
     for(b = 0; b < 8 && dirPtr[b] != 0x20; b++){

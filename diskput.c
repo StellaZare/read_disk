@@ -17,6 +17,7 @@
 #define ENTRY_SIZE 32
 #define SECTOR_SIZE 512
 #define STR_BUFFER_SIZE 100
+#define MAX_FAT_ENTRIES 3072   //9 sectors x 512 bytes x 8 bits / 12 bit entries
 
 
 /* ---------- Helper functions ---------- */
@@ -49,7 +50,61 @@ int rootContainsFile(char* diskptr, char* filename, int physicalSector){
     return FALSE;
 }
 
-int addFileToRootDir(char* inputFileName, char* inputFileptr, int inputFileSize, char* diskptr){
+int getNextFATEntry(char* diskptr){
+    int value;
+    for(int entry = 2; entry < MAX_FAT_ENTRIES; entry++){
+        value = getFatEntry(entry, diskptr);
+        if(value == 0x00){
+            return entry;
+        }
+    }
+    return FAILED_EXIT;
+}
+
+void addRootEntry(char* name, int fileSize, int firstLogicalSector, char* diskptr){
+    char* dir = diskptr + (SECTOR_SIZE * 19);
+    while(dir[0] != 0x00){
+        dir += 32;
+    }
+
+    int b;
+    int end = FALSE;
+    for(b = 0; b < 8; b++){
+        if(name[b] == '.'){
+            end = b;
+        }
+        if(!end){
+            dir[b] = name[b];
+        }else{
+            dir[b] = ' ';
+        }
+    }
+    for(b = 0; b < 3; b++){
+        dir[b+8] = name[end+b+1];
+    }
+
+    dir[11] = 0;
+
+    printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
+    dir[26] = (firstLogicalSector);
+    printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
+	dir[27] = (firstLogicalSector - dir[26]) >> 8;
+    printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
+
+    dir[28] = (fileSize & 0x000000FF);
+	dir[29] = (fileSize & 0x0000FF00) >> 8;
+	dir[30] = (fileSize & 0x00FF0000) >> 16;
+	dir[31] = (fileSize & 0xFF000000) >> 24;
+}
+
+int copyFileToRootDir(char* inputFileName, char* inputFileptr, int inputFileSize, char* diskptr){
+    int bytesRemaining = inputFileSize;
+    int currFatEntry = getNextFATEntry(diskptr);
+    printf("currentFAT: %d\n", currFatEntry);
+
+    addRootEntry(inputFileName, inputFileSize, currFatEntry, diskptr);
+
+
     return 0;
 }
 
@@ -64,7 +119,7 @@ int main(int argc, char* argv[]){
     }
     
     // open file
-    int file = open(argv[1], O_RDONLY);
+    int file = open(argv[1], O_RDWR);
     if(file == FAILED_EXIT){
         printf("Error: unable to open disk image\n");
         return FAILED_EXIT;
@@ -79,7 +134,7 @@ int main(int argc, char* argv[]){
     }
 
     // load disk image into buffer
-    char* diskptr = mmap(NULL, buffer.st_size, PROT_READ, MAP_SHARED, file, 0);
+    char* diskptr = mmap(NULL, buffer.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, file, 0);
     if(diskptr == MAP_FAILED){
         printf("Error: mmap() call failed\n");
         close(file);
@@ -144,12 +199,13 @@ int main(int argc, char* argv[]){
             return FAILED_EXIT;
         }
         printf("\tAdding file to root directory\n");
-        addFileToRootDir(inputFileName, inputFileptr, inputFileSize, diskptr);
+        copyFileToRootDir(filename, inputFileptr, inputFileSize, diskptr);
     }
 
     // clean
     munmap(inputFileptr, inputFileSize);
     close(inputFile);
+
     munmap(diskptr, buffer.st_size);
     close(file);
  

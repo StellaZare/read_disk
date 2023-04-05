@@ -5,7 +5,8 @@ diskget
 diskinfo
 disklist
 diskput
-
+disks/*
+ex
 # Prerequisites
 *.d
 
