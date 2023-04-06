@@ -47,27 +47,26 @@ int getFileEntry(char* filename, char* diskptr, int physicalSector, dirEntry_t* 
 }
 
 void copyFileEntry(char* diskptr, char* newFileptr, dirEntry_t* fileEntry){
-    int logicalSector = fileEntry->logicalSector;
+    int logicalSector = (uint8_t)fileEntry->logicalSector;
     int fileSize = fileEntry->size;
     int bytesRemaining = fileSize;
-    int physicalSector = SECTOR_SIZE * (logicalSector + 31);
 
-    int byte;
-    for(byte = 0; byte < SECTOR_SIZE && bytesRemaining > 0; byte++){
-        newFileptr[fileSize-bytesRemaining] = diskptr[physicalSector+byte];
-        //printf("%d: %c %d\n", byte, (char)diskptr[physicalSector+byte], bytesRemaining);
-        bytesRemaining--;
-    }
-    logicalSector = getFatEntry(logicalSector, diskptr);
-    while(logicalSector != 0xFFF){
-        physicalSector = SECTOR_SIZE * (logicalSector + 31);
-        for(byte = 0; byte < SECTOR_SIZE && bytesRemaining > 0; byte++){
-            newFileptr[fileSize-bytesRemaining] = diskptr[physicalSector+byte];
+    while(bytesRemaining > 0){
+        int physicalSector = SECTOR_SIZE * (logicalSector + 31);
+
+        int byte;
+        for(byte = 0; byte < SECTOR_SIZE; byte++){
+            if(bytesRemaining == 0){
+                printf("\tDone copying file!\n");
+                return;
+            }
+            printf("%c  ", (uint8_t)diskptr[physicalSector+byte]);
+            newFileptr[fileSize-bytesRemaining] = (uint8_t)diskptr[physicalSector+byte];
             bytesRemaining--;
         }
         logicalSector = getFatEntry(logicalSector, diskptr);
     }
-    printf("\tDone copying file!\n");
+    return; 
 }
 
 

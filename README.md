@@ -131,3 +131,7 @@ xxd -g <num> -s <num> -l <num> <disk image>
 | FAT1     | 10      | 5,120    |
 | root     | 19      | 9,728    |
 | data     | 33      | 16,896   |
+
+# Creating a disk image
+mkdir test
+dd if=/dev/zero of=mydisk.IMA count=2880 bs=512

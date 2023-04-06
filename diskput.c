@@ -104,17 +104,17 @@ void copyFileToRootDir(char* inputFileName, char* inputFileptr, int inputFileSiz
     addRootEntry(inputFileName, inputFileSize, currFatEntry, diskptr);
     
     while(bytesRemaining > 0){
-        printf("currentFATEntry: %d\n", currFatEntry);
+        printf("currentFATEntry: %d - bytesRemaining: %d\n", currFatEntry, bytesRemaining);
         int physicalSector = SECTOR_SIZE * (currFatEntry + 31);
 
         int byte;
         for(byte = 0; byte < SECTOR_SIZE; byte++){
-            if(bytesRemaining == 0){
+            if(bytesRemaining == 0 ){
+                printf("setting entry %d to 0xFFF\n", currFatEntry);
                 setFatEntry(0xFFF, currFatEntry, diskptr);
                 return;
             }
-            printf("%02x ", inputFileptr[inputFileSize - bytesRemaining]);
-            diskptr[physicalSector + byte] = (inputFileptr[inputFileSize - bytesRemaining]);
+            diskptr[physicalSector + byte] = (inputFileptr[inputFileSize - bytesRemaining] & 0xFF);
             bytesRemaining--;
         }
         setFatEntry(0X123, currFatEntry, diskptr);
@@ -193,10 +193,6 @@ int main(int argc, char* argv[]){
         munmap(diskptr, buffer.st_size);
         close(file);
         return FAILED_EXIT;
-    }
-
-    for(int i = 0; i<inputFile; i++){
-        printf("%x ", inputFileptr[i]);
     }
 
     int diskSize = getDiskSize(diskptr);
