@@ -42,6 +42,7 @@ int getDiskSize(char* diskptr){
 }
 
 int getFatEntry(int entry, char* diskptr){
+
     int b1;
     int b2;
     int result;
@@ -53,27 +54,23 @@ int getFatEntry(int entry, char* diskptr){
 	} else {
 		b1 = diskptr[SECTOR_SIZE + (int)((3*entry) / 2)] & 0xF0;
 		b2 = diskptr[SECTOR_SIZE + (int)((3*entry) / 2) + 1] & 0xFF;
-		result = (b1 >> 4) + (b2 << 4);
+		//result = (b1 << 4) + b2;
+        result = (b1 >> 4) + (b2 << 4);
 	}
-
     return result;
 }
 
 void setFatEntry(int value, int entry, char* diskptr){
     char* Fat1 = diskptr + SECTOR_SIZE ;
     //char* Fat2 = diskptr + (SECTOR_SIZE * 10);
-
-    printf("setting value: %08x\n", value);
-
     if ((entry % 2) == 0) {
 		Fat1[((3*entry) / 2) + 1] = (((value & 0xF00) >> 8) + (uint8_t)(Fat1[((3*entry) / 2) + 1] & 0xF0));
 		Fat1[((3*entry) / 2)] = value & 0xFF;
-        printf("entry: %d b1: %02x b2: %02x\n", entry, (uint8_t)Fat1[((3*entry) / 2)], (uint8_t)Fat1[((3*entry) / 2) + 1]);
+        //printf("entry: %d b1: %02x b2: %02x\n", entry, (uint8_t)Fat1[((3*entry) / 2)], (uint8_t)Fat1[((3*entry) / 2) + 1]);
 	} else {
-		Fat1[(int)((3*entry) / 2)] = ((value & 0xF00) >> 4) + (uint8_t)(Fat1[(int)((3*entry) / 2)] & 0x0F);
-		Fat1[(int)((3*entry) / 2) + 1] = (value & 0xFF) & 0xFF;
-        
-        printf("entry: %d b1: %02x b2: %02x\n", entry, (uint8_t)Fat1[(int)((3*entry) / 2)], (uint8_t)Fat1[(int)((3*entry) / 2) + 1]);
+		Fat1[(int)((3*entry) / 2)] = ((value & 0xF) << 4) + (uint8_t)(Fat1[(int)((3*entry) / 2)] & 0x0F);
+		Fat1[(int)((3*entry) / 2) + 1] = (value & 0xFF0) >> 4;
+        //printf("entry: %d b1: %02x b2: %02x\n", entry, (uint8_t)Fat1[(int)((3*entry) / 2)], (uint8_t)Fat1[(int)((3*entry) / 2) + 1]);
     }  
 }
 

@@ -85,11 +85,8 @@ void addRootEntry(char* name, int fileSize, uint32_t firstLogicalSector, char* d
 
     dir[11] = 0;
 
-    //printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
     dir[26] = (uint32_t)(firstLogicalSector & 0x000000FF);
-    //printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
 	dir[27] = (firstLogicalSector & 0x0000FF00) >> 8;
-    //printf("fls: %08x b26: %08x b27: %08x\n", firstLogicalSector, dir[26], dir[27]);
 
     dir[28] = (fileSize & 0x000000FF);
 	dir[29] = (fileSize & 0x0000FF00) >> 8;
@@ -104,21 +101,22 @@ void copyFileToRootDir(char* inputFileName, char* inputFileptr, int inputFileSiz
     addRootEntry(inputFileName, inputFileSize, currFatEntry, diskptr);
     
     while(bytesRemaining > 0){
-        printf("currentFATEntry: %d - bytesRemaining: %d\n", currFatEntry, bytesRemaining);
         int physicalSector = SECTOR_SIZE * (currFatEntry + 31);
+        printf("Bytes remaining: %d  FatEntry: %d  physSector: %d\n", bytesRemaining, currFatEntry, physicalSector);
 
         int byte;
         for(byte = 0; byte < SECTOR_SIZE; byte++){
             if(bytesRemaining == 0 ){
-                printf("setting entry %d to 0xFFF\n", currFatEntry);
                 setFatEntry(0xFFF, currFatEntry, diskptr);
                 return;
             }
-            diskptr[physicalSector + byte] = (inputFileptr[inputFileSize - bytesRemaining] & 0xFF);
+
+            diskptr[physicalSector + byte] = inputFileptr[inputFileSize - bytesRemaining];
             bytesRemaining--;
         }
         setFatEntry(0X123, currFatEntry, diskptr);
         int nextFatEntry = getNextFATEntry(diskptr);
+        printf("NextFat: %d\n", nextFatEntry);
         setFatEntry(nextFatEntry, currFatEntry, diskptr);
         currFatEntry = nextFatEntry;
     }
@@ -186,7 +184,7 @@ int main(int argc, char* argv[]){
     }
 
     int inputFileSize = inputFileBuffer.st_size;
-    char* inputFileptr = mmap(NULL, inputFileSize, PROT_READ, MAP_SHARED, file, 0);
+    char* inputFileptr = mmap(NULL, inputFileSize, PROT_READ, MAP_SHARED, inputFile, 0);
     if(inputFileptr == MAP_FAILED){
         printf("Error: mmap() call failed\n");
         close(inputFile);
