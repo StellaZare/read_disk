@@ -88,17 +88,17 @@ void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr){
 
     if (dirPtr[11] == 0x10){
         entryPtr->attr = 'D';
-        entryPtr->logicalSector = dirPtr[26] + (dirPtr[27] << 8);
+        entryPtr->logicalSector = ((uint8_t)dirPtr[26]) + ((uint8_t)dirPtr[27] << 8);
     }else{
         entryPtr->attr = 'F';
 
-        entryPtr->creationYear = (((dirPtr[17] & 0xfe)) >> 1) + 1980;
-		entryPtr->creationMonth = ((dirPtr[16] & 0xe0) >> 5) + (((dirPtr[17] & 0x01)) << 3);
-		entryPtr->creationDay = (dirPtr[16] & 0x1f);
-		entryPtr->creationHour = (dirPtr[15] & 0xf8) >> 3;
-		entryPtr->creationMin = ((dirPtr[14] & 0xe0) >> 5) + ((dirPtr[15] & 0x7) << 3);
-        entryPtr->logicalSector = dirPtr[26] + (dirPtr[27] << 8);
-        entryPtr->size = (dirPtr[28] & 0xFF) + ((dirPtr[29] & 0xFF) << 8) + ((dirPtr[30] & 0xFF) << 16) + ((dirPtr[31] & 0xFF) << 24);
+        entryPtr->creationYear = ((((uint8_t)dirPtr[17] & 0xfe)) >> 1) + 1980;
+		entryPtr->creationMonth = (((uint8_t)dirPtr[16] & 0xe0) >> 5) + ((((uint8_t)dirPtr[17] & 0x01)) << 3);
+		entryPtr->creationDay = ((uint8_t)dirPtr[16] & 0x1f);
+		entryPtr->creationHour = ((uint8_t)dirPtr[15] & 0xf8) >> 3;
+		entryPtr->creationMin = (((uint8_t)dirPtr[14] & 0xe0) >> 5) + (((uint8_t)dirPtr[15] & 0x7) << 3);
+        entryPtr->logicalSector = (uint8_t)dirPtr[26] + ((uint8_t)dirPtr[27] << 8);
+        entryPtr->size = ((uint8_t)dirPtr[28] & 0xFF) + (((uint8_t)dirPtr[29] & 0xFF) << 8) + (((uint8_t)dirPtr[30] & 0xFF) << 16) + (((uint8_t)dirPtr[31] & 0xFF) << 24);
     }
 
 }
