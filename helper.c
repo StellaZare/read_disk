@@ -54,7 +54,6 @@ int getFatEntry(int entry, char* diskptr){
 	} else {
 		b1 = diskptr[SECTOR_SIZE + (int)((3*entry) / 2)] & 0xF0;
 		b2 = diskptr[SECTOR_SIZE + (int)((3*entry) / 2) + 1] & 0xFF;
-		//result = (b1 << 4) + b2;
         result = (b1 >> 4) + (b2 << 4);
 	}
     return result;
