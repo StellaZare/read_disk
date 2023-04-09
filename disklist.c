@@ -46,6 +46,9 @@ void traverseDirectory(char* parentName, char* diskptr, int physicalSector) {
             count++;
 		}
         dir+=32;
+        if(count > 15){
+            break;
+        }
 	}
 
     printDirectoryContents(parentName, dirContents, count);
