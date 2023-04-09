@@ -61,7 +61,6 @@ void traverseDirectory(char* parentName, char* diskptr, int physicalSector) {
 
     for(int i = 0; i < count; i++) {
         if(dirContents[i].attr == 'D'){
-            printf("%s going to logical sector %d\n",dirContents[i].filename, dirContents[i].logicalSector);
             traverseDirectory(dirContents[i].filename, diskptr, (dirContents[i].logicalSector)+31);
         }
     }

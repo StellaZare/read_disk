@@ -73,7 +73,6 @@ void setFatEntry(int value, int entry, char* diskptr){
     }  
 }
 
-extractDirectoryEntry(&dirContents[count], dir);
 void extractDirectoryEntry(dirEntry_t* entryPtr, char* dirPtr){
     int b;
     for(b = 0; b < 8 && dirPtr[b] != 0x20; b++){
