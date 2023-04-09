@@ -37,17 +37,19 @@ void printDirectoryContents(char* parentName, dirEntry_t* entryPtr, int count){
 
 void traverseDirectory(char* parentName, char* diskptr, int physicalSector) {
 	char* dir = &diskptr[SECTOR_SIZE * physicalSector];
-	int count = 0;
     int logicalSector = physicalSector - 31;
+    int count = 0;
     int bytes = 0;
-    dirEntry_t dirContents[50];
+    dirEntry_t dirContents[100];
 
 	while(dir[0] != 0x00) {	
+
         if (!(dir[11] & 0x08) && dir[0] != 0x2e) {
 			extractDirectoryEntry(&dirContents[count], dir);
             count++;
 		}
         dir+=32;
+        bytes+=32;
         if(bytes >= 512 && logicalSector >= 2){
             logicalSector = getFatEntry(logicalSector, diskptr);
             bytes = 0;
@@ -59,7 +61,8 @@ void traverseDirectory(char* parentName, char* diskptr, int physicalSector) {
 
     for(int i = 0; i < count; i++) {
         if(dirContents[i].attr == 'D'){
-            traverseDirectory(dirContents[i].filename, diskptr, dirContents[i].logicalSector+31);
+            printf("%s going to logical sector %d\n",dirContents[i].filename, dirContents[i].logicalSector);
+            traverseDirectory(dirContents[i].filename, diskptr, (dirContents[i].logicalSector)+31);
         }
     }
 }
