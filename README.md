@@ -35,7 +35,7 @@ For part 3
 ./diskget <diskname.IMA> <filename.ext>
 ```
 Part 4
-not get complete
+./diskput <diskname.IMA> <filename.ext>
 
 # Part 1: diskinfo
 
@@ -117,7 +117,28 @@ The function copies over the first 512 bytes of the file using the first logical
 
 # Part 4: diskput
 
-not yet complete
+## Explanation
+This implementation is not complete and only accepts cases where the file is being added to the root directory of the disk image. (Going for part marks!)
+\
+\
+The disk image and the new file are processes in a similar way to part 3 with mmap and the necessary permissions. First the input file size is compared with the available bytes on the disk using the stat struct and the function getFreeSize() from part 1.
+\
+\
+If there is sufficient space on the disk the function copyFileToRootDir() is called which handles the bulk of the operations.
+\
+\
+The function first get the entry # for the next free entry in the FAT table. This corresponds to the first logical cluster we can use to store the contents of the new file. The function then adds an entry in the root directory by calling the function addRootEntry() to set the file name, attribute flag, first logical cluster and the file size. The date created/modified did not seem like vital fields so they were left with default values.
+\
+\
+Then the function copyFileToRootDir() begins to copy the contents of the file to the root directory byte-by-byte. Once a sector is full, the function find the next empty FAT entry; stores the value in the previously empty FAT entry; and continues to copy into the new logical sector. The function terminates when the file has been successfully copied over, and the last FAT entry is set with the value 0xFFF.
+
+## Error handling 
+* Error: program should be invoked as follows
+* Error: unable to open disk image
+* Error: fstat() call failed
+* Error: mmap() call failed
+* Error: not enough space on the disk
+* Error: file already exists in root directory
 
 # Useful commands
 ```

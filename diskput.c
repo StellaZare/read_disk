@@ -102,8 +102,7 @@ void copyFileToRootDir(char* inputFileName, char* inputFileptr, int inputFileSiz
     
     while(bytesRemaining > 0){
         int physicalSector = SECTOR_SIZE * (currFatEntry + 31);
-        printf("Bytes remaining: %d  FatEntry: %d  physSector: %d\n", bytesRemaining, currFatEntry, physicalSector);
-
+        
         int byte;
         for(byte = 0; byte < SECTOR_SIZE; byte++){
             if(bytesRemaining == 0 ){
@@ -116,7 +115,6 @@ void copyFileToRootDir(char* inputFileName, char* inputFileptr, int inputFileSiz
         }
         setFatEntry(0X123, currFatEntry, diskptr);
         int nextFatEntry = getNextFATEntry(diskptr);
-        printf("NextFat: %d\n", nextFatEntry);
         setFatEntry(nextFatEntry, currFatEntry, diskptr);
         currFatEntry = nextFatEntry;
     }
@@ -215,6 +213,9 @@ int main(int argc, char* argv[]){
         }
         printf("\tAdding file to root directory\n");
         copyFileToRootDir(filename, inputFileptr, inputFileSize, diskptr);
+    }else{
+        printf("\tSorry we do not have support for that.\n");
+        printf("\tTry adding to root directory.\n");
     }
 
     // clean

@@ -53,18 +53,29 @@ void getLabel(char output[STR_BUFFER_SIZE], char* diskptr){
 
 int getNumberOfFiles(char* diskptr, int physicalSector) {
 	char* dir = &diskptr[SECTOR_SIZE * physicalSector];
-	int count = 0;
+	int logicalSector = physicalSector - 31;
+    int count = 0;
+    int bytes = 0;
 
 	while(dir[0] != 0x00) {	
+        if(bytes >= 512 && logicalSector >= 2){
+            logicalSector = getFatEntry(logicalSector, diskptr);
+            bytes = 0;
+            dir = &diskptr[SECTOR_SIZE * (logicalSector+31)];
+        }
+
         if((dir[11] & 0x10) && dir[0] != 0x2e){
-            int logicalCluster = dir[26] + (dir[27] << 8);
-            int inSub = getNumberOfFiles(diskptr, logicalCluster+31);
+            // Recurse on subdirecotry
+            int logicalSectorSub = (uint8_t)dir[26] + ((uint8_t)dir[27] << 8);
+            int inSub = getNumberOfFiles(diskptr, logicalSectorSub+31);
             count += inSub;
 		}
         else if (!(dir[11] & 0x08) && !(dir[11] & 0x10)) {
+            // count current directory 
 			count++;
 		}
         dir+=32;
+        bytes+=32; 
 	}
 	return count;
 }
